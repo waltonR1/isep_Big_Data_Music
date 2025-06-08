@@ -1,0 +1,68 @@
+{
+  "playlists": {
+    "href": "https://api.spotify.com/v1/search?offset=0&limit=11&query=top%2550&type=playlist",
+    "limit": 11,
+    "next": "https://api.spotify.com/v1/search?offset=11&limit=11&query=top%2550&type=playlist",
+    "offset": 0,
+    "previous": null,
+    "total": 1000,
+    "items": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      {
+        "collaborative": false,
+        "description": "Best Pop Hits",
+        "external_urls": {
+          "spotify": "https://open.spotify.com/playlist/34NbomaTu7YuOYnky8nLXL"
+        },
+        "href": "https://api.spotify.com/v1/playlists/34NbomaTu7YuOYnky8nLXL",
+        "id": "34NbomaTu7YuOYnky8nLXL",
+        "images": [
+          {
+            "height": 640,
+            "url": "https://mosaic.scdn.co/640/ab67616d00001e0236032cb4acd9df050bc2e197ab67616d00001e02659cd4673230913b3918e0d5ab67616d00001e0282ea2e9e1858aa012c57cd45ab67616d00001e02fa2bcf3df669bde08b2e7d36",
+            "width": 640
+          },
+          {
+            "height": 300,
+            "url": "https://mosaic.scdn.co/300/ab67616d00001e0236032cb4acd9df050bc2e197ab67616d00001e02659cd4673230913b3918e0d5ab67616d00001e0282ea2e9e1858aa012c57cd45ab67616d00001e02fa2bcf3df669bde08b2e7d36",
+            "width": 300
+          },
+          {
+            "height": 60,
+            "url": "https://mosaic.scdn.co/60/ab67616d00001e0236032cb4acd9df050bc2e197ab67616d00001e02659cd4673230913b3918e0d5ab67616d00001e0282ea2e9e1858aa012c57cd45ab67616d00001e02fa2bcf3df669bde08b2e7d36",
+            "width": 60
+          }
+        ],
+        "name": "Pop Hits 2025 (Top 50)",
+        "owner": {
+          "display_name": "TylerLife",
+          "external_urls": {
+            "spotify": "https://open.spotify.com/user/313odiyd72vqxinsh4grr4wqqfpa"
+          },
+          "href": "https://api.spotify.com/v1/users/313odiyd72vqxinsh4grr4wqqfpa",
+          "id": "313odiyd72vqxinsh4grr4wqqfpa",
+          "type": "user",
+          "uri": "spotify:user:313odiyd72vqxinsh4grr4wqqfpa"
+        },
+        "primary_color": null,
+        "public": true,
+        "snapshot_id": "AAAAmWlXkWlcCpEI58Gl9zkjrOdM6Cbj",
+        "tracks": {
+          "href": "https://api.spotify.com/v1/playlists/34NbomaTu7YuOYnky8nLXL/tracks",
+          "total": 58
+        },
+        "type": "playlist",
+        "uri": "spotify:playlist:34NbomaTu7YuOYnky8nLXL"
+      }
+    ]
+  }
+}
