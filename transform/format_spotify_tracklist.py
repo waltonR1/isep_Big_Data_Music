@@ -4,29 +4,29 @@ from datetime import datetime
 from pyspark.sql.functions import col, expr
 
 def format_spotify_tracklist():
-    layerLast = "raw"
-    layer = "formatted"
+    layer_source = "raw"
+    layer_target = "formatted"
     group = "spotify"
-    tableName = "trackLists"
+    table_name = "track_lists"
     today = datetime.today().strftime("%Y%m%d")
-    filename = "trackLists"
+    file_name = "track_lists"
 
     # 初始化 SparkSession，配置 S3A 连接
-    spark = SparkSession.builder \
-        .appName("FormatSpotifyTrackLists") \
-        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
-        .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566") \
-        .config("spark.hadoop.fs.s3a.access.key", "dummy") \
-        .config("spark.hadoop.fs.s3a.secret.key", "dummy") \
-        .config("spark.hadoop.fs.s3a.path.style.access", "true") \
-        .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false") \
-        .getOrCreate()
+    spark = (SparkSession.builder
+        .appName("FormatSpotifyTrackLists")
+        .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+        .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
+        .config("spark.hadoop.fs.s3a.access.key", "dummy")
+        .config("spark.hadoop.fs.s3a.secret.key", "dummy")
+        .config("spark.hadoop.fs.s3a.path.style.access", "true")
+        .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
+        .getOrCreate())
 
 
     # 路径
-    input_path = f"s3a://{layerLast}-data-music/{group}/{tableName}/{today}/{filename}.json"
-    output_path = f"s3a://{layer}-data-music/{group}/{tableName}/{today}/{filename}.parquet"
-    local_output_path = f"../data/{layer}/{group}/{tableName}/{today}/{filename}.parquet"
+    input_path = f"s3a://{layer_source}-data-music/{group}/{table_name}/{today}/{file_name}.json"
+    s3_output_path = f"s3a://{layer_target}-data-music/{group}/{table_name}/{today}/{file_name}.parquet"
+    local_output_path = f"../data/{layer_target}/{group}/{table_name}/{today}/{file_name}.parquet"
 
     # 读取 JSON
     df = spark.read.option("multiLine", "true").json(input_path)
@@ -46,6 +46,7 @@ def format_spotify_tracklist():
         col("uri").alias("track_uri"),
         col("is_playable"),
         col("is_local"),
+        col("available_markets"),
 
         # 主艺人信息：取第一个（可扩展为 explode 多艺人）
         col("artists")[0]["name"].alias("artist_name"),
@@ -71,10 +72,10 @@ def format_spotify_tracklist():
 
 
     # 写入 Parquet
-    formatted.write.mode("overwrite").parquet(output_path)
+    formatted.write.mode("overwrite").parquet(s3_output_path)
     formatted.write.mode("overwrite").parquet(local_output_path)
 
-    print(f"[SUCCESS](Spotify Track Lists)  Formatting completed and uploaded to s3 → {output_path}")
+    print(f"[SUCCESS](Spotify Track Lists)  Formatting completed and uploaded to s3 → {s3_output_path}")
     print(f"[SUCCESS](Spotify Track Lists) Locally saved → {local_output_path}")
 
 if __name__ == "__main__":

@@ -1,22 +1,21 @@
 ```
 big_data_music/
 ├── dags/                 # Airflow 的 DAG 文件
-│   └── music_pipeline.py
 ├── ingestion/            # 数据采集模块（调用 API）
-│   ├── fetch_spotify.py
-│   └── fetch_trends.py
 ├── transform/            # 格式化 + Spark 转换
-│   ├── format_data.py
-│   └── combine_data.py
 ├── index/                # Elasticsearch 索引模块
-│   └── index_elastic.py
 ├── utils/                # 工具函数（比如 S3 上传）
-│   └── s3_utils.py
-├── raw/                  # 原始数据（JSON、CSV）
-├── formatted/            # 格式化后（Parquet）
-├── final/                # 整合结果（用于展示）
-├── requirements.txt      # 项目依赖
-└── README.md             # 项目说明
+├── data/                 # 数据湖存储目录（分层）
+│   ├── raw/              # 原始数据（JSON、CSV）
+│   ├── formatted/        # 格式化后（Parquet）
+│   └── usage/            # 最终输出供分析用
+├── .env                  # 环境变量配置（不要提交）
+├── .env.example          # 环境变量模板
+├── docker-compose.yml    # Docker 服务定义（如 LocalStack / Airflow）
+├── requirements.txt      # Python 依赖列表
+├── .gitignore            # gitignore
+└── README.md             # 项目说明文档
+
 ```
 
 ##  环境变量配置（.env 文件）
@@ -36,7 +35,6 @@ big_data_music/
 ```bash
   docker compose up -d
 ```
-
 4. 创建bucket(只需一次)
 ```bash
     docker compose exec localstack awslocal s3 mb s3://raw-data-music

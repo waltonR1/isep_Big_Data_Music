@@ -21,7 +21,7 @@ def fetch_top_tracks(limit=500):
 
     tracks = response.json().get("tracks", {}).get("track", [])
 
-    save_to_file(tracks,"raw","lastfm","topTracks","topTracks.json",True)
+    save_to_file(tracks,"raw","lastfm","top_tracks","top_tracks.json",True)
 
 def fetch_top_artists(limit=50):
     params = {
@@ -35,7 +35,7 @@ def fetch_top_artists(limit=50):
 
     artists = response.json().get("artists", {}).get("artist", [])
 
-    save_to_file(artists, "raw", "lastfm", "topArtists", "topArtists.json", True)
+    save_to_file(artists, "raw", "lastfm", "top_artists", "top_artists.json", True)
 
 if __name__ == "__main__":
     fetch_top_tracks()

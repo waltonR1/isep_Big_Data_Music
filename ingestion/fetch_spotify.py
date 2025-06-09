@@ -50,7 +50,7 @@ def fetch_tracks():
         print(f"Fetched {len(items)} tracks from offset {offset}")
         time.sleep(0.3)
 
-    save_to_file(all_tracks,"raw","spotify","trackLists","trackLists.json",True)
+    save_to_file(all_tracks,"raw","spotify","track_lists","track_lists.json",True)
 
 if __name__ == "__main__":
     fetch_tracks()
