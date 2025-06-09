@@ -19,9 +19,10 @@ Thumbs.db
 .localstack/
 
 # 数据文件（实际数据不需要提交）
-#data/raw/
-#data/formatted/
-#data/usage/
+data/
+data/raw/
+data/formatted/
+data/usage/
 
 # Jupyter Notebook Checkpoints
 .ipynb_checkpoints/
@@ -30,6 +31,6 @@ Thumbs.db
 *.log
 
 # 输出结果
-#*.parquet
-#*.csv
-#*.json
+*.parquet
+*.csv
+*.json

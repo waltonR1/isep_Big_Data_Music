@@ -73,9 +73,9 @@ def format_spotify_tracklist():
 
     # 写入 Parquet
     formatted.write.mode("overwrite").parquet(s3_output_path)
-    formatted.write.mode("overwrite").parquet(local_output_path)
-
     print(f"[SUCCESS](Spotify Track Lists)  Formatting completed and uploaded to s3 → {s3_output_path}")
+
+    formatted.write.mode("overwrite").parquet(local_output_path)
     print(f"[SUCCESS](Spotify Track Lists) Locally saved → {local_output_path}")
 
 if __name__ == "__main__":

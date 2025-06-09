@@ -47,9 +47,9 @@ def format_lastfm_tracks():
 
     # 写入 Parquet
     formatted.write.mode("overwrite").parquet(s3_output_path)
-    formatted.write.mode("overwrite").parquet(local_output_path)
-
     print(f"[SUCCESS](Last.fm Top Tracks)  Formatting completed and uploaded to s3 → {s3_output_path}")
+
+    formatted.write.mode("overwrite").parquet(local_output_path)
     print(f"[SUCCESS](Last.fm Top Tracks) Locally saved → {local_output_path}")
 
 if __name__ == "__main__":

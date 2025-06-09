@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lower, trim, expr, round as _round, avg, countDistinct, size, desc
+from pyspark.sql.functions import col, lower, trim, expr, round as _round, avg, countDistinct, size, desc, current_timestamp, to_utc_timestamp,sha2,concat_ws
 from datetime import datetime
 
 layer_source = "formatted"
@@ -12,7 +12,7 @@ group_output = "combined"
 today = datetime.today().strftime("%Y%m%d")
 
 def s3_output_path(table_name, file_name):
-    return f"s3a://{layer_target}/{group_output}/{table_name}/{today}/{file_name}.parquet"
+    return f"s3a://{layer_target}-data-music/{group_output}/{table_name}/{today}/{file_name}.parquet"
 
 def local_output_path(table_name, file_name):
     return f"../data/{layer_target}/{group_output}/{table_name}/{today}/{file_name}.parquet"
@@ -48,32 +48,47 @@ def load_tables(spark):
     return lft, lfa, spt
 
 
-# ── 1. Artist Metrics ───────────────────────────────────────────
-def create_artist_metrics(lfa, spt):
-    """热门艺人 / 平均流行度 / 受众分布"""
-    # 热门艺人按 playcount
+def create_artist_retention_metrics(lfa):
     hot = lfa.select("artist_key", "artist_name", "playcount", "listeners")
 
-    # 各艺人平均 Spotify popularity
-    avg_pop = spt.groupBy("artist_key").agg(_round(avg("popularity"), 2).alias("avg_popularity"))
+    # 计算复听率
+    retention = lfa.withColumn("repeat_rate",_round(col("listeners") / col("playcount"), 4)).select("artist_key", "repeat_rate")
 
-    # 受众分布：listeners 与 playcount 比值
-    ratio = lfa.withColumn("audience_ratio",_round(col("listeners") / col("playcount"), 4)).select("artist_key", "audience_ratio")
+    artist_retention_metrics = hot.join(retention, "artist_key", "left")
 
-    artist_metrics = hot.join(avg_pop, "artist_key", "left").join(ratio, "artist_key", "left").orderBy(desc("playcount"))
+    artist_retention_metrics = artist_retention_metrics.withColumn(
+        "processed_at_utc", to_utc_timestamp(current_timestamp(), "UTC")
+    )
 
-    artist_metrics.write.mode("overwrite").parquet(local_output_path("artist_metrics", "artist_metrics"))
+    artist_retention_metrics = artist_retention_metrics.orderBy(desc("repeat_rate"))
 
+    artist_retention_metrics.write.mode("overwrite").parquet(local_output_path("artist_retention_metrics", "artist_retention_metrics"))
+    artist_retention_metrics.write.mode("overwrite").parquet(s3_output_path("artist_retention_metrics", "artist_retention_metrics"))
 
-# ── 2. Track Insights ──────────────────────────────────────────
-def create_track_insights(lft, spt):
-    """热门歌曲榜 / 时长分布字段 / 可播放国家数 / 专辑聚合"""
+def create_artist_track_count_metrics(spt):
+    base = spt.select("artist_id", "artist_name", "track_id")
+
+    track_count = (
+        base.groupBy("artist_id", "artist_name")
+            .agg(countDistinct("track_id").alias("track_count"))
+    )
+
+    artist_track_metrics = track_count.withColumn(
+        "processed_at_utc", to_utc_timestamp(current_timestamp(), "UTC")
+    )
+
+    artist_track_metrics = artist_track_metrics.orderBy(desc("track_count"))
+
+    artist_track_metrics.write.mode("overwrite").parquet(local_output_path("artist_track_count_metrics", "artist_track_count_metrics"))
+    artist_track_metrics.write.mode("overwrite").parquet(s3_output_path("artist_track_count_metrics", "artist_track_count_metrics"))
+
+def get_hot_track(lft, spt):
     spt_sel = (
         spt.select(
             "track_key",
             "artist_key",
             "popularity",
-            col("duration_ms").alias("duration_ms_sp"),  # ★ 改名
+            col("duration_ms").alias("duration_ms_sp"),
             "album_name",
             "album_id",
             "available_markets",
@@ -87,49 +102,20 @@ def create_track_insights(lft, spt):
         .withColumn("country_cnt", size(col("available_markets")))
     )
 
-    # a) 全量 track-level 表（含所有衍生字段）
-    tracks.write.mode("overwrite").parquet(local_output_path("track_level", "track_level"))
+    # 热门歌曲
+    hot_tracks = tracks.orderBy(desc("dual_score")).select("track_name", "artist_name", "dual_score","playcount","listeners","country_cnt")
+    hot_tracks.write.mode("overwrite").parquet(local_output_path("hot_tracks", "hot_tracks"))
+    hot_tracks.write.mode("overwrite").parquet(s3_output_path("hot_tracks", "hot_tracks"))
 
-    # b) 热门歌曲榜单
-    tracks.orderBy(desc("dual_score")).select("track_name", "artist_name", "dual_score").write.mode("overwrite").parquet(local_output_path("hot_tracks", "hot_tracks"))
-
-    # c) 专辑聚合
-    (tracks.groupBy("album_id", "album_name")
-     .agg(countDistinct("track_key").alias("track_cnt"),
-          _round(avg("popularity"), 2).alias("avg_popularity"))
-     .orderBy(desc("track_cnt"))
-     .write.mode("overwrite")
-     .parquet(local_output_path("album_stats","album_stats")))
-
-
-# ── 3. Combination Analysis ───────────────────────────────────
-def create_combination(lft, spt):
-    """Last.fm 播放热度 vs Spotify 流行度"""
-    joined = (lft.join(
-        spt.select("track_key", "artist_key", "popularity"),
-        ["track_key", "artist_key"], "inner")
-              .withColumn("playcount_norm", expr("playcount / 1000.0"))
-              .withColumn("diff", _round(col("popularity") - col("playcount_norm"), 2))
-              )
-
-    joined.write.mode("overwrite").parquet(local_output_path("combination","full_join"))
-
-    # 冷门金曲：播放量高 popularity 低
-    joined.filter("playcount_norm > 500 and popularity < 30").orderBy(desc("playcount_norm")).write.mode("overwrite").parquet(local_output_path("combination","hidden_gems"))
-
-    # 流媒体宠儿：popularity 高 播放量低
-    joined.filter("popularity > 70 and playcount_norm < 200").orderBy(desc("popularity")).write.mode("overwrite").parquet(local_output_path("combination","streaming_darlings"))
-
-
-# ── 主程序 ────────────────────────────────────────────────────
-if __name__ == "__main__":
+def run_all_analyses():
     spark = init_spark()
-
     lft, lfa, spt = load_tables(spark)
-
-    create_artist_metrics(lfa, spt)
-    create_track_insights(lft, spt)
-    create_combination(lft, spt)
-
+    create_artist_retention_metrics(lfa)
+    create_artist_track_count_metrics(spt)
+    get_hot_track(lft, spt)
     spark.stop()
-    print(f"✅ 数据集已全部写入")
+    print("[SUCCESS] All analysis tasks completed")
+
+
+if __name__ == "__main__":
+    run_all_analyses()
