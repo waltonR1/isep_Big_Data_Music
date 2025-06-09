@@ -5,3 +5,5 @@ requests~=2.32.3
 boto3~=1.38.32
 
 python-dotenv~=1.1.0
+apache-airflow~=2.9.0
+pyspark-stubs~=3.0.0.post3

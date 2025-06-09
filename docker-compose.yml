@@ -19,9 +19,10 @@ x-airflow-common: &airflow-common
     - ./ingestion:/opt/airflow/ingestion
     - ./transform:/opt/airflow/transform
     - ./index:/opt/airflow/index
-    - ./data/raw:/opt/airflow/raw
-    - ./data/formatted:/opt/airflow/formatted
-    - ./data/usage:/opt/airflow/usage
+    - ./utils:/opt/airflow/utils
+    - ./data/raw:/opt/airflow/data/raw
+    - ./data/formatted:/opt/airflow/data/formatted
+    - ./data/usage:/opt/airflow/data/usage
   user: "${AIRFLOW_UID}:${AIRFLOW_GID}"
   depends_on:
     - postgres
