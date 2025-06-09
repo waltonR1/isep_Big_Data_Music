@@ -1,0 +1,72 @@
+[
+  {
+    "name": "BIRDS OF A FEATHER",
+    "duration": "0",
+    "playcount": "42058968",
+    "listeners": "1776710",
+    "mbid": "",
+    "url": "https://www.last.fm/music/Billie+Eilish/_/BIRDS+OF+A+FEATHER",
+    "streamable": {
+      "#text": "0",
+      "fulltrack": "0"
+    },
+    "artist": {
+      "name": "Billie Eilish",
+      "mbid": "",
+      "url": "https://www.last.fm/music/Billie+Eilish"
+    },
+    "image": [
+      {
+        "#text": "https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "size": "small"
+      },
+      {
+        "#text": "https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "size": "medium"
+      },
+      {
+        "#text": "https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "size": "large"
+      },
+      {
+        "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "size": "extralarge"
+      }
+    ]
+  },
+  {
+    "name": "Good Luck, Babe!",
+    "duration": "0",
+    "playcount": "45105764",
+    "listeners": "1675427",
+    "mbid": "",
+    "url": "https://www.last.fm/music/Chappell+Roan/_/Good+Luck,+Babe%21",
+    "streamable": {
+      "#text": "0",
+      "fulltrack": "0"
+    },
+    "artist": {
+      "name": "Chappell Roan",
+      "mbid": "",
+      "url": "https://www.last.fm/music/Chappell+Roan"
+    },
+    "image": [
+      {
+        "#text": "https://lastfm.freetls.fastly.net/i/u/34s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "size": "small"
+      },
+      {
+        "#text": "https://lastfm.freetls.fastly.net/i/u/64s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "size": "medium"
+      },
+      {
+        "#text": "https://lastfm.freetls.fastly.net/i/u/174s/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "size": "large"
+      },
+      {
+        "#text": "https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png",
+        "size": "extralarge"
+      }
+    ]
+  }
+]

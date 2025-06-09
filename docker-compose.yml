@@ -10,15 +10,18 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
     _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME}
     _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD}
-    _PIP_ADDITIONAL_REQUIREMENTS: pandas requests boto3 pytrends elasticsearch
+    LASTFM_API_KEY: ${LASTFM_API_KEY}
+    SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+    SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+    _PIP_ADDITIONAL_REQUIREMENTS: pandas requests boto3 elasticsearch
   volumes:
     - ./dags:/opt/airflow/dags
     - ./ingestion:/opt/airflow/ingestion
     - ./transform:/opt/airflow/transform
     - ./index:/opt/airflow/index
-    - ./raw:/opt/airflow/raw
-    - ./formatted:/opt/airflow/formatted
-    - ./final:/opt/airflow/final
+    - ./data/raw:/opt/airflow/raw
+    - ./data/formatted:/opt/airflow/formatted
+    - ./data/usage:/opt/airflow/usage
   user: "${AIRFLOW_UID}:${AIRFLOW_GID}"
   depends_on:
     - postgres
@@ -43,7 +46,6 @@ services:
       - postgres
       - redis
 
-  # ② 下面这些保持原样
   airflow-webserver:
     <<: *airflow-common
     command: webserver
@@ -97,9 +99,8 @@ services:
     environment:
       - SERVICES=s3
       - DEFAULT_REGION=us-east-1
-      - DATA_DIR=/tmp/localstack/data
     volumes:
-      - "./.localstack:/tmp/localstack"
+      - "./.localstack:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
 
 volumes:

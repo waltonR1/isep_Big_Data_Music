@@ -1,6 +1,7 @@
 from utils.file_utils import save_to_file
 
 import requests
+import time
 import os
 import dotenv
 
@@ -22,47 +23,34 @@ def get_access_token():
     response.raise_for_status()
     return response.json()["access_token"]
 
-
-def fetch_categories(locale="en-US"):
-    access_token = get_access_token()
-
-    category_url = f"https://api.spotify.com/v1/browse/categories?locale={locale}&limit=50"
-    headers = {"Authorization": f"Bearer {access_token}"}
-    cat_resp = requests.get(category_url, headers=headers)
-    cat_resp.raise_for_status()
-    categoriesList = cat_resp.json()["categories"]["items"]
-
-    categories = [
-        {"id": category["id"], "name": category["name"]}
-        for category in categoriesList
-    ]
-
-    save_to_file(categories,"raw","spotify","categories","categories.json")
-
-
-def fetch_playlists():
-    access_token = get_access_token()
-
-    playlist_url = f"https://api.spotify.com/v1/search?q=top%2550&type=playlist&limit=11"
-    headers = {"Authorization": f"Bearer {access_token}"}
-    playlist_resp = requests.get(playlist_url, headers=headers)
-    playlist_resp.raise_for_status()
-    playlist = playlist_resp.json()
-
-    save_to_file(playlist,"raw","spotify","playlists","playlist.json")
-
 def fetch_tracks():
     access_token = get_access_token()
-
-    playlist_url = f"https://api.spotify.com/v1/search?q=top%2550&type=track&limit=1"
     headers = {"Authorization": f"Bearer {access_token}"}
-    track_resp = requests.get(playlist_url, headers=headers)
-    track_resp.raise_for_status()
-    trackList = track_resp.json()
 
-    save_to_file(trackList,"raw","spotify","tracklists","tracklist.json")
+    query = "top%2050"
+    limit = 50
+
+    initial_url = f"https://api.spotify.com/v1/search?q={query}&type=track&limit=1"
+    initial_resp = requests.get(initial_url, headers=headers)
+    initial_resp.raise_for_status()
+    initial_data = initial_resp.json()
+    total = initial_data.get("tracks", {}).get("total", 0)
+    print(f"Total tracks to fetch: {total}")
+
+    all_tracks = []
+
+
+    for offset in range(0, total, limit):
+        url = f"https://api.spotify.com/v1/search?q={query}&type=track&limit={limit}&offset={offset}"
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        page = response.json()
+        items = page.get("tracks", {}).get("items", [])
+        all_tracks.extend(items)
+        print(f"Fetched {len(items)} tracks from offset {offset}")
+        time.sleep(0.3)
+
+    save_to_file(all_tracks,"raw","spotify","trackLists","trackLists.json",True)
 
 if __name__ == "__main__":
-    # fetch_categories("zh_CN")
-    fetch_playlists()
     fetch_tracks()

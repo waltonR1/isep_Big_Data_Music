@@ -3,6 +3,5 @@ elasticsearch==8.13.2     # 用于将数据写入 Elasticsearch 索引
 pandas                    # 辅助处理 CSV、JSON 小规模数据
 requests~=2.32.3
 boto3                     # 用于操作 LocalStack 模拟 S3 数据湖
-pytrends                  # 获取 Google Trends 热度数据
 
 python-dotenv~=1.1.0
