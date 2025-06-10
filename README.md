@@ -5,14 +5,13 @@ big_data_music/
 ├── transform/            # 格式化 + Spark 转换
 ├── index/                # Elasticsearch 索引模块
 ├── utils/                # 工具函数（比如 S3 上传）
-├── data/                 # 数据湖存储目录（分层）
+├── data/                 # 数据湖存储目录（分层）(实际并没有使用，而是使用的localstack，此处仅仅是为了展示数据)
 │   ├── raw/              # 原始数据（JSON、CSV）
 │   ├── formatted/        # 格式化后（Parquet）
 │   └── usage/            # 最终输出供分析用
 ├── .env                  # 环境变量配置（不要提交）
 ├── .env.example          # 环境变量模板
 ├── docker-compose.yml    # Docker 服务定义（如 LocalStack / Airflow）
-├── requirements.txt      # Python 依赖列表
 ├── .gitignore            # gitignore
 └── README.md             # 项目说明文档
 
