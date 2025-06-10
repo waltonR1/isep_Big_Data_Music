@@ -23,7 +23,8 @@ big_data_music/
 ├── transform/            # Formatting + Spark transformation
 ├── index/                # Elasticsearch indexing module
 ├── utils/                # Utility functions (e.g., S3 upload)
-├── data/                 # Data lake storage directory (layered) (Not actually used; LocalStack is used instead. This is for display only)
+├── data/                 # Data lake storage directory (layered) 
+│   │                     # (Not actually used; This is for display only)
 │   ├── raw/              # Raw data (JSON, CSV)
 │   ├── formatted/        # Formatted data (Parquet)
 │   └── usage/            # Final output for analysis
