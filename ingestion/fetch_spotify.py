@@ -40,7 +40,7 @@ def fetch_tracks():
     all_tracks = []
 
 
-    for offset in range(0, total, limit):
+    for offset in range(0, total//2, limit):
         url = f"https://api.spotify.com/v1/search?q={query}&type=track&limit={limit}&offset={offset}"
         response = requests.get(url, headers=headers)
         response.raise_for_status()

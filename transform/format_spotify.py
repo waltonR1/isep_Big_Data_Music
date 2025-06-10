@@ -14,6 +14,7 @@ def format_spotify_tracklist():
     # 初始化 SparkSession，配置 S3A 连接
     spark = (SparkSession.builder
         .appName("FormatSpotifyTrackLists")
+        .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
         .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
         .config("spark.hadoop.fs.s3a.access.key", "dummy")

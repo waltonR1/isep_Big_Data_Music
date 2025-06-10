@@ -20,6 +20,7 @@ def local_output_path(table_name, file_name):
 def init_spark():
     return (SparkSession.builder
             .appName("CombineMusicData")
+            .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
             .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
             .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
             .config("spark.hadoop.fs.s3a.access.key", "dummy")
@@ -31,9 +32,9 @@ def init_spark():
 
 def load_tables(spark):
     """读取 3 张 Parquet 并统一生成 join key"""
-    path_lastfm_tracks = f"s3a://{layer_source}-data-music/{group_lastfm}/topTracks/{today}/topTracks.parquet"
-    path_lastfm_artists = f"s3a://{layer_source}-data-music/{group_lastfm}/topArtists/{today}/topArtists.parquet"
-    path_spotify_tracks = f"s3a://{layer_source}-data-music/{group_spotify}/trackLists/{today}/trackLists.parquet"
+    path_lastfm_tracks = f"s3a://{layer_source}-data-music/{group_lastfm}/top_tracks/{today}/top_tracks.parquet"
+    path_lastfm_artists = f"s3a://{layer_source}-data-music/{group_lastfm}/top_artists/{today}/top_artists.parquet"
+    path_spotify_tracks = f"s3a://{layer_source}-data-music/{group_spotify}/track_lists/{today}/track_lists.parquet"
 
     lft = spark.read.parquet(path_lastfm_tracks).alias("lft")
     lfa = spark.read.parquet(path_lastfm_artists).alias("lfa")

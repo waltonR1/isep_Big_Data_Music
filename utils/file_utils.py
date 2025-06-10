@@ -4,8 +4,6 @@ import os
 from datetime import datetime
 import pandas as pd
 
-pd.set_option('future.no_silent_downcasting', True)
-
 def save_to_file(data, layer, group, table_name, file_name, upload=False):
     today = datetime.today().strftime('%Y%m%d')
     current_dir = os.path.dirname(os.path.abspath(__file__))

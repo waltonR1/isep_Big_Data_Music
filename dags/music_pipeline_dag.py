@@ -1,5 +1,10 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from airflow import DAG
 from airflow.operators.python import PythonOperator
+
 from datetime import datetime
 from ingestion.fetch_lastfm import fetch_top_tracks,fetch_top_artists
 from ingestion.fetch_spotify import fetch_tracks
@@ -9,7 +14,7 @@ from transform.combine_music_data import run_all_analyses
 from index.bulk_import_to_es import import_all_parquet_files
 
 with DAG(
-    dag_id="music_data_pipeline",
+    "music_data_pipeline",
     default_args={
     "owner": "airflow",
     "depends_on_past": False,

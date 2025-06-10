@@ -11,6 +11,7 @@ ES_HOST = "http://localhost:9200"
 # 初始化 SparkSession（确保 S3A 支持）
 spark = (SparkSession.builder
     .appName("ImportParquetToES")
+    .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
     .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
     .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
     .config("spark.hadoop.fs.s3a.access.key", "dummy")
@@ -20,7 +21,7 @@ spark = (SparkSession.builder
     .getOrCreate()
 )
 
-es = Elasticsearch(hosts=[ES_HOST])
+es = Elasticsearch(hosts=[ES_HOST],basic_auth=('elastic', 'bm1tNqK2'))
 
 def import_all_parquet_files(root_dir):
     # 遍历所有逻辑表目录

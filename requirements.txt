@@ -1,9 +1,0 @@
-pyspark==3.5.1            # 用于 Spark 格式化和合并数据
-elasticsearch==8.13.2     # 用于将数据写入 Elasticsearch 索引
-pandas~=2.3.0
-requests~=2.32.3
-boto3~=1.38.32
-
-python-dotenv~=1.1.0
-apache-airflow~=2.9.0
-pyspark-stubs~=3.0.0.post3

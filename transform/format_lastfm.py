@@ -14,6 +14,7 @@ def format_lastfm_artists():
     # 初始化 SparkSession，配置 S3A 连接
     spark = (SparkSession.builder
         .appName("FormatLastfmArtists")
+        .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
         .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
         .config("spark.hadoop.fs.s3a.access.key", "dummy")
@@ -59,6 +60,7 @@ def format_lastfm_tracks():
     # 初始化 SparkSession，配置 S3A 连接
     spark = (SparkSession.builder
         .appName("FormatLastfmTracks")
+        .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
         .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
         .config("spark.hadoop.fs.s3a.access.key", "dummy")
@@ -96,6 +98,7 @@ def format_lastfm_tracks():
 
     formatted.write.mode("overwrite").parquet(local_output_path)
     print(f"[SUCCESS](Last.fm Top Tracks) Locally saved → {local_output_path}")
+
 if __name__ == "__main__":
     format_lastfm_artists()
     format_lastfm_tracks()
