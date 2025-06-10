@@ -1,6 +1,12 @@
 from pyspark.sql import SparkSession
 from elasticsearch import Elasticsearch, helpers
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+ES_USER = os.getenv("ELK_USER")
+ES_PASS = os.getenv("ELK_PASS")
 
 def import_all_parquet_files():
     spark = (SparkSession.builder
@@ -15,7 +21,7 @@ def import_all_parquet_files():
              .getOrCreate()
              )
 
-    es = Elasticsearch(hosts=["http://localhost:9200"], basic_auth=('elastic', 'bm1tNqK2'))
+    es = Elasticsearch(hosts=["http://localhost:9200"], basic_auth=(ES_USER, ES_PASS))
     # 遍历所有逻辑表目录
     groups = ["artist_track_count_metrics", "hot_tracks"]
 

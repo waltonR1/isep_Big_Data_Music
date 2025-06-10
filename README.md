@@ -1,175 +1,258 @@
-```
+# Big Data Music Project
+
+## Project Overview
+
+Big Data Music is an end-to-end big data processing project that integrates multiple music APIs (such as Last.fm and Spotify) to achieve data collection, cleansing, transformation, analysis, and visualization.
+The project aims to build a data processing pipeline based on a data lake architecture, orchestrated by Apache Airflow, transformed by Spark, and analyzed and visualized using ELK (Elasticsearch + Kibana), simulating a real-world distributed big data platform.
+
+The project adopts a distributed architecture design and includes the following key components:
+
+* **Airflow**: Responsible for orchestrating the entire data workflow (runs locally)
+* **Apache Spark**: Responsible for data cleansing and transformation (runs locally)
+* **Elasticsearch + Kibana (ELK)**: Used for indexing and visualization (runs locally)
+* **LocalStack (Docker deployment)**: Used to simulate AWS S3 locally, serving as the storage medium for the layered data lake
+
+All modules work together via a shared `.env` file and unified directory structure, building a complete chain from data collection → processing → analysis.
+
+## Project Structure
+
+```plaintext
 big_data_music/
-├── dags/                 # Airflow 的 DAG 文件
-├── ingestion/            # 数据采集模块（调用 API）
-├── transform/            # 格式化 + Spark 转换
-├── index/                # Elasticsearch 索引模块
-├── utils/                # 工具函数（比如 S3 上传）
-├── data/                 # 数据湖存储目录（分层）(实际并没有使用，而是使用的localstack，此处仅仅是为了展示数据)
-│   ├── raw/              # 原始数据（JSON、CSV）
-│   ├── formatted/        # 格式化后（Parquet）
-│   └── usage/            # 最终输出供分析用
-├── .env                  # 环境变量配置（不要提交）
-├── .env.example          # 环境变量模板
-├── docker-compose.yml    # Docker 服务定义（如 LocalStack / Airflow）
+├── dags/                 # DAG files for Airflow
+├── ingestion/            # Data ingestion module (API calls)
+├── transform/            # Formatting + Spark transformation
+├── index/                # Elasticsearch indexing module
+├── utils/                # Utility functions (e.g., S3 upload)
+├── data/                 # Data lake storage directory (layered) (Not actually used; LocalStack is used instead. This is for display only)
+│   ├── raw/              # Raw data (JSON, CSV)
+│   ├── formatted/        # Formatted data (Parquet)
+│   └── usage/            # Final output for analysis
+├── .env                  # Environment variable configuration (do not submit)
+├── .env.example          # Environment variable template
+├── docker-compose.yml    # Docker service definition (LocalStack)
 ├── .gitignore            # gitignore
-└── README.md             # 项目说明文档
-
+└── README.md             # Project documentation
 ```
 
-##  环境变量配置（.env 文件）
-1. 在项目根目录下创建 .env 文件
-2. 可参考 .env.example 模板文件，其中包含了所有必需的变量及其说明。
+## Main Modules and Functions
 
-## Docker 启动
-1. 清理旧容器及数据库（首次设置建议执行）
+### 1. dags Directory
+
+Contains DAG (Directed Acyclic Graph) files for Airflow to define the data processing workflow.
+
+### 2. ingestion Directory
+
+Responsible for collecting data from various music APIs.
+
+* fetch\_lastfm.py: Fetches top track data from the Last.fm API.
+* fetch\_spotify.py: Fetches track data from the Spotify API.
+
+### 3. transform Directory
+
+Formats and transforms the collected raw data using Spark for processing.
+
+* format\_lastfm.py: Formats Last.fm top tracks and converts them to Parquet format for S3 upload.
+* format\_spotify.py: Formats Spotify track data.
+* combine\_music\_data.py: Merges music data from different sources and generates metrics for analysis.
+
+### 4. index Directory
+
+Indexes the processed data into Elasticsearch for subsequent search and analysis.
+
+* bulk\_import\_to\_es.py: Batch imports Parquet files from S3 into Elasticsearch.
+
+### 5. utils Directory
+
+Contains utility functions such as file saving and S3 uploading.
+
+* file\_utils.py: Provides functions to save data to local files and upload to S3.
+* upload\_file\_to\_s3.py: Used to upload files to S3 buckets.
+
+### 6. data Directory
+
+Serves as the storage directory for the data lake, divided into raw, formatted, and usage layers. In practice, LocalStack is used for storage.
+
+* raw/: Stores raw data collected from APIs in JSON or CSV format.
+* formatted/: Stores formatted data in Parquet format.
+* usage/: Stores data used for final analysis.
+
+## Environment Configuration
+
+### Environment Variable Configuration (.env File)
+
+Copy `.env.example` to `.env` and fill in your API Key.
+
+### Get Spotify API Credentials
+
+1. Log in to the [Spotify Developer Platform](https://developer.spotify.com/)
+2. Create a new app
+3. View your Client ID and Client Secret
+4. Add the following to the `.env` file in your project root:
+
+```dotenv
+SPOTIFY_CLIENT_ID=yourClientID
+SPOTIFY_CLIENT_SECRET=yourClientSecret
+```
+
+### Get Last.fm API Credentials
+
+1. Log in to the [Last.fm Developer API Platform](https://www.last.fm/api)
+2. Create a new app
+3. View your api\_key
+4. Add the following to the `.env` file in your project root:
+
+```dotenv
+LASTFM_API_KEY=yourApiKey
+```
+
+## Startup Steps
+
+### Clean Up Old Containers and Databases (Recommended for First Setup)
+
 ```bash
   docker compose down --volumes --remove-orphans
 ```
-2. 启动服务
+
+### Start Services (LocalStack)
+
 ```bash
   docker compose up -d
 ```
-3. 创建bucket(只需一次)
+
+### Create S3 Buckets (Only Needed Once)
+
 ```bash
-    docker compose exec localstack awslocal s3 mb s3://raw-data-music
+  docker compose exec localstack awslocal s3 mb s3://raw-data-music
 ```
+
 ```bash
-    docker compose exec localstack awslocal s3 mb s3://formatted-data-music
-```  
+  docker compose exec localstack awslocal s3 mb s3://formatted-data-music
+```
+
 ```bash
-    docker compose exec localstack awslocal s3 mb s3://usage-data-music
+  docker compose exec localstack awslocal s3 mb s3://usage-data-music
 ```
 
-## 获取 Spotify API 授权信息
+### Start Local Components
 
-1. 登录 [Spotify 开发者平台](https://developer.spotify.com/)
-2. 创建一个新的应用(APP)
-3. 查看你的 Client ID 和 Client Secret 
-4. 在你的项目根目录 .env 文件中添加：
+#### Airflow (Recommended to Run in Virtual Environment or Conda)
 
-```dotenv
-SPOTIFY_CLIENT_ID=你的ClientID
-SPOTIFY_CLIENT_SECRET=你的ClientSecret
+```bash
+    # 1. Enter virtual environment directory (optional)
+    cd ~/airflow_venv
+    # 2. Activate virtual environment (required)
+    source bin/activate
+    # 3. Optional: Ensure Airflow commands can be found (needed on some systems)
+    export PATH=/home/walton/.local/bin/:$PATH
+    # 4. Set DAG path to your project's dags folder (valid for current session)
+    export AIRFLOW__CORE__DAGS_FOLDER=/home/usr/Big_Data_Music/dags
+    # 5. Start Airflow (use standalone for first run, or use webserver + scheduler)
+    airflow standalone
 ```
 
-## 获取 Last.fm API 授权信息
+#### Spark
 
-1. 登录[Last.fm 开发者 API 平台](https://www.last.fm/api)
-2. 创建一个新的应用(APP)
-3. 查看你的 api_key
-4. 在你的项目根目录 .env 文件中添加：
+For Windows, make sure Spark is properly configured beforehand.
 
-```dotenv
-LASTFM_API_KEY=你的apikey
+#### Elasticsearch & Kibana (Local Run)
+
+Ensure that your locally installed Elasticsearch and Kibana services are started:
+
+* Elasticsearch running at [http://localhost:9200](http://localhost:9200)
+* Kibana running at [http://localhost:5601](http://localhost:5601)
+
+## Sample Raw Data
+
+### topTracks\_example
+
+```
+topTracks_example.json
+└── [ ]
+    ├── name                  # Track name
+    ├── duration              # Duration of track
+    ├── playcount             # Number of plays
+    ├── listeners             # Number of listeners
+    ├── mbid                  # MusicBrainz ID (optional)
+    ├── url                   # Track page link
+    ├── streamable
+    │   ├── #text             # Whether streamable
+    │   └── fulltrack         # Whether it's a full track
+    ├── artist
+    │   ├── name              # Artist name
+    │   ├── mbid              # Artist ID
+    │   └── url               # Artist page link
+    └── image [ ]             # Cover images in different sizes
+        ├── #text             # Image URL
+        └── size              # Size: small/medium/large/extralarge
 ```
 
+### trackLists\_example
 
-### 查看localstack
+```
+trackLists_example.json
+└── [ ]                       # Track list (array)
+    ├── album                 # Album info
+    │   ├── album_type        # Type (album / single / compilation)
+    │   ├── artists [ ]       # Album artist list
+    │   │   ├── external_urls # External links
+    │   │   │   └── spotify   # Spotify link
+    │   │   ├── href          # API endpoint
+    │   │   ├── id            # Artist unique ID
+    │   │   ├── name          # Artist name
+    │   │   ├── type          # Object type (artist)
+    │   │   └── uri           # Spotify URI
+    │   ├── available_markets [ ]  # Available countries (ISO-3166 codes)
+    │   ├── external_urls
+    │   │   └── spotify       # Spotify album link
+    │   ├── href              # Album API endpoint
+    │   ├── id                # Album ID
+    │   ├── images [ ]        # Album cover images
+    │   │   ├── height        # Image height in px
+    │   │   ├── width         # Image width in px
+    │   │   └── url           # Image URL
+    │   ├── is_playable       # Whether playable (bool)
+    │   ├── name              # Album name
+    │   ├── release_date      # Release date
+    │   ├── release_date_precision # Precision (year/month/day)
+    │   ├── total_tracks      # Total number of tracks
+    │   ├── type              # Object type (album)
+    │   └── uri               # Album URI
+    ├── artists [ ]           # Track artist list
+    │   ├── external_urls
+    │   │   └── spotify       # Spotify artist link
+    │   ├── href              # Artist API endpoint
+    │   ├── id                # Artist ID
+    │   ├── name              # Artist name
+    │   ├── type              # Object type (artist)
+    │   └── uri               # Artist URI
+    ├── available_markets [ ] # Markets where track is available
+    ├── disc_number           # Disc number
+    ├── duration_ms           # Duration in milliseconds
+    ├── explicit              # Explicit content (bool)
+    ├── external_ids
+    │   └── isrc              # International Standard Recording Code (ISRC)
+    ├── external_urls
+    │   └── spotify           # Spotify track link
+    ├── href                  # Track API endpoint
+    ├── id                    # Track ID
+    ├── is_local              # Whether local track (bool)
+    ├── is_playable           # Whether playable (bool)
+    ├── name                  # Track name
+    ├── popularity            # Popularity score (0–100)
+    ├── preview_url           # Preview clip URL
+    ├── track_number          # Track number in album
+    ├── type                  # Object type (track)
+    └── uri                   # Track URI
+```
+
+### View LocalStack Data
+
+You can view the contents of S3 buckets in LocalStack using the following commands:
+
 ```bash
     docker compose exec localstack awslocal s3 ls s3://raw-data-music --recursive
 
     docker compose exec localstack awslocal s3 ls s3://formatted-data-music --recursive
 
     docker compose exec localstack awslocal s3 ls s3://usage-data-music --recursive
-```
-
-## topTracks_example
-```
-topTracks_example.json
-└── [ ]
-    ├── name                  # 歌曲名称
-    ├── duration              # 歌曲时长
-    ├── playcount             # 播放次数
-    ├── listeners             # 听众人数
-    ├── mbid                  # 音乐数据库ID（可为空）
-    ├── url                   # 歌曲页面链接
-    ├── streamable
-    │   ├── #text             # 是否可播放
-    │   └── fulltrack         # 是否是完整曲目
-    ├── artist
-    │   ├── name              # 歌手名
-    │   ├── mbid              # 歌手ID
-    │   └── url               # 歌手页面链接
-    └── image [ ]             # 不同尺寸的封面图
-        ├── #text             # 封面图链接
-        └── size              # 尺寸：small/medium/large/extralarge
-
-
-```
-
-## topArtists_example
-```
-topArtists_example.json
-└── [ ] 
-    ├── name                  # 歌手名称
-    ├── playcount             # 所有歌曲总播放次数
-    ├── listeners             # 听众人数
-    ├── mbid                  # 音乐数据库ID
-    ├── url                   # 歌手在 Last.fm 的主页链接
-    ├── streamable            # 是否支持在线播放（0/1）
-    └── image [ ]             # 多种尺寸的歌手头像图
-        ├── #text             # 图片链接
-        └── size              # 尺寸：small / medium / large / extralarge / mega
-
-
-```
-
-## trackLists_example
-```
-trackLists_example.json
-└── [ ]                       # 曲目列表（数组）
-    ├── album                 # 专辑信息
-    │   ├── album_type        # 专辑类型（album / single / compilation）
-    │   ├── artists [ ]       # 专辑艺术家列表
-    │   │   ├── external_urls # 外部链接
-    │   │   │   └── spotify   # Spotify 链接
-    │   │   ├── href          # API 端点
-    │   │   ├── id            # 艺术家唯一 ID
-    │   │   ├── name          # 艺术家名称
-    │   │   ├── type          # 对象类型（artist）
-    │   │   └── uri           # Spotify URI
-    │   ├── available_markets [ ]  # 可播放地区（ISO-3166 国家码）
-    │   ├── external_urls
-    │   │   └── spotify       # 专辑在 Spotify 的链接
-    │   ├── href              # 专辑 API 端点
-    │   ├── id                # 专辑 ID
-    │   ├── images [ ]        # 专辑封面列表
-    │   │   ├── height        # 像素高度
-    │   │   ├── width         # 像素宽度
-    │   │   └── url           # 图片链接
-    │   ├── is_playable       # 是否可播放（布尔）
-    │   ├── name              # 专辑名称
-    │   ├── release_date      # 发行日期
-    │   ├── release_date_precision # 日期精度（year / month / day）
-    │   ├── total_tracks      # 专辑曲目总数
-    │   ├── type              # 对象类型（album）
-    │   └── uri               # 专辑 URI
-    ├── artists [ ]           # 曲目艺术家列表
-    │   ├── external_urls
-    │   │   └── spotify       # 艺术家 Spotify 链接
-    │   ├── href              # 艺术家 API 端点
-    │   ├── id                # 艺术家 ID
-    │   ├── name              # 艺术家名称
-    │   ├── type              # 对象类型（artist）
-    │   └── uri               # 艺术家 URI
-    ├── available_markets [ ] # 单曲可播放地区
-    ├── disc_number           # 所属碟序号
-    ├── duration_ms           # 时长（毫秒）
-    ├── explicit              # 是否含露骨内容（布尔）
-    ├── external_ids
-    │   └── isrc              # 国际标准录音码 ISRC
-    ├── external_urls
-    │   └── spotify           # 曲目 Spotify 链接
-    ├── href                  # 曲目 API 端点
-    ├── id                    # 曲目 ID
-    ├── is_local              # 是否本地曲目（布尔）
-    ├── is_playable           # 是否可播放（布尔）
-    ├── name                  # 曲目名称
-    ├── popularity            # 流行度（0–100）
-    ├── preview_url           # 试听片段链接
-    ├── track_number          # 专辑中的曲目序号
-    ├── type                  # 对象类型（track）
-    └── uri                   # 曲目 URI
-
 ```
