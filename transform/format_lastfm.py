@@ -26,7 +26,7 @@ def format_lastfm_tracks():
     # 路径
     input_path = f"s3a://{layer_source}-data-music/{group}/{table_name}/{today}/{file_name}.json"
     s3_output_path = f"s3a://{layer_target}-data-music/{group}/{table_name}/{today}/{file_name}.parquet"
-    local_output_path = f"../data/{layer_target}/{group}/{table_name}/{today}/{file_name}.parquet"
+    # local_output_path = f"../data/{layer_target}/{group}/{table_name}/{today}/{file_name}.parquet"
 
     # 读取 JSON
     df = spark.read.option("multiLine", "true").json(input_path)
@@ -50,8 +50,8 @@ def format_lastfm_tracks():
     formatted.write.mode("overwrite").parquet(s3_output_path)
     print(f"[SUCCESS](Last.fm Top Tracks)  Formatting completed and uploaded to s3 → {s3_output_path}")
 
-    formatted.write.mode("overwrite").parquet(local_output_path)
-    print(f"[SUCCESS](Last.fm Top Tracks) Locally saved → {local_output_path}")
+    # formatted.write.mode("overwrite").parquet(local_output_path)
+    # print(f"[SUCCESS](Last.fm Top Tracks) Locally saved → {local_output_path}")
 
 if __name__ == "__main__":
     format_lastfm_tracks()

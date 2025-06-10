@@ -22,6 +22,8 @@ with DAG(
 },
     catchup=False,
     start_date=datetime(2025,1,1),
+    max_active_tasks=4,
+    concurrency=8,
     description="Fetch → Format → Combine → Index music data",
 ) as dag:
     dag.doc_md = """

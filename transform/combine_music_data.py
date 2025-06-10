@@ -20,9 +20,9 @@ def s3_output_path(table_name, file_name):
 def local_output_path(table_name, file_name):
     return f"../data/{layer_target}/{group_output}/{table_name}/{today}/{file_name}.parquet"
 
-def init_spark():
-    return (SparkSession.builder
-            .appName("CombineMusicData")
+def create_artist_track_count_metrics():
+    spark = (SparkSession.builder
+            .appName("ArtistTrackCountData")
             .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
             .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
             .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
@@ -31,9 +31,6 @@ def init_spark():
             .config("spark.hadoop.fs.s3a.path.style.access", "true")
             .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
             .getOrCreate())
-
-def create_artist_track_count_metrics():
-    spark = init_spark()
     spt = spark.read.parquet(path_spotify_tracks).alias("spt")
     spt = spt.withColumn("track_key", lower(trim(col("track_name")))).withColumn("artist_key", lower(trim(col("artist_name"))))
 
@@ -57,7 +54,17 @@ def create_artist_track_count_metrics():
     print("[SUCCESS] GET ARTIST TRACK COUNTS")
 
 def get_hot_track():
-    spark = init_spark()
+    spark = (SparkSession.builder
+            .appName("HotTrackData")
+            .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
+            .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+            .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
+            .config("spark.hadoop.fs.s3a.access.key", "dummy")
+            .config("spark.hadoop.fs.s3a.secret.key", "dummy")
+            .config("spark.hadoop.fs.s3a.path.style.access", "true")
+            .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
+            .getOrCreate())
+
     lft = spark.read.parquet(path_lastfm_tracks).alias("lft")
     spt = spark.read.parquet(path_spotify_tracks).alias("spt")
 
