@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, lower, trim, expr, round as _round, avg, countDistinct, size, desc, current_timestamp, to_utc_timestamp,sha2,concat_ws
+from pyspark.sql.functions import col, lower, trim, round as _round, countDistinct, size, desc, current_timestamp, to_utc_timestamp
 from datetime import datetime
 
 layer_source = "formatted"
@@ -10,6 +10,9 @@ group_spotify = "spotify"
 group_output = "combined"
 
 today = datetime.today().strftime("%Y%m%d")
+
+path_lastfm_tracks = f"s3a://{layer_source}-data-music/{group_lastfm}/top_tracks/{today}/top_tracks.parquet"
+path_spotify_tracks = f"s3a://{layer_source}-data-music/{group_spotify}/track_lists/{today}/track_lists.parquet"
 
 def s3_output_path(table_name, file_name):
     return f"s3a://{layer_target}-data-music/{group_output}/{table_name}/{today}/{file_name}.parquet"
@@ -29,44 +32,12 @@ def init_spark():
             .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
             .getOrCreate())
 
-
-def load_tables(spark):
-    """读取 3 张 Parquet 并统一生成 join key"""
-    path_lastfm_tracks = f"s3a://{layer_source}-data-music/{group_lastfm}/top_tracks/{today}/top_tracks.parquet"
-    path_lastfm_artists = f"s3a://{layer_source}-data-music/{group_lastfm}/top_artists/{today}/top_artists.parquet"
-    path_spotify_tracks = f"s3a://{layer_source}-data-music/{group_spotify}/track_lists/{today}/track_lists.parquet"
-
-    lft = spark.read.parquet(path_lastfm_tracks).alias("lft")
-    lfa = spark.read.parquet(path_lastfm_artists).alias("lfa")
+def create_artist_track_count_metrics():
+    spark = init_spark()
     spt = spark.read.parquet(path_spotify_tracks).alias("spt")
-
-    lft = lft.withColumn("track_key", lower(trim(col("track_name")))).withColumn("artist_key", lower(trim(col("artist_name"))))
-
-    lfa = lfa.withColumn("artist_key", lower(trim(col("artist_name"))))
-
     spt = spt.withColumn("track_key", lower(trim(col("track_name")))).withColumn("artist_key", lower(trim(col("artist_name"))))
 
-    return lft, lfa, spt
 
-
-def create_artist_retention_metrics(lfa):
-    hot = lfa.select("artist_key", "artist_name", "playcount", "listeners")
-
-    # 计算复听率
-    retention = lfa.withColumn("repeat_rate",_round(col("listeners") / col("playcount"), 4)).select("artist_key", "repeat_rate")
-
-    artist_retention_metrics = hot.join(retention, "artist_key", "left")
-
-    artist_retention_metrics = artist_retention_metrics.withColumn(
-        "processed_at_utc", to_utc_timestamp(current_timestamp(), "UTC")
-    )
-
-    artist_retention_metrics = artist_retention_metrics.orderBy(desc("repeat_rate"))
-
-    artist_retention_metrics.write.mode("overwrite").parquet(local_output_path("artist_retention_metrics", "artist_retention_metrics"))
-    artist_retention_metrics.write.mode("overwrite").parquet(s3_output_path("artist_retention_metrics", "artist_retention_metrics"))
-
-def create_artist_track_count_metrics(spt):
     base = spt.select("artist_id", "artist_name", "track_id")
 
     track_count = (
@@ -83,7 +54,16 @@ def create_artist_track_count_metrics(spt):
     artist_track_metrics.write.mode("overwrite").parquet(local_output_path("artist_track_count_metrics", "artist_track_count_metrics"))
     artist_track_metrics.write.mode("overwrite").parquet(s3_output_path("artist_track_count_metrics", "artist_track_count_metrics"))
 
-def get_hot_track(lft, spt):
+    print("[SUCCESS] GET ARTIST TRACK COUNTS")
+
+def get_hot_track():
+    spark = init_spark()
+    lft = spark.read.parquet(path_lastfm_tracks).alias("lft")
+    spt = spark.read.parquet(path_spotify_tracks).alias("spt")
+
+    lft = lft.withColumn("track_key", lower(trim(col("track_name")))).withColumn("artist_key", lower(trim(col("artist_name"))))
+    spt = spt.withColumn("track_key", lower(trim(col("track_name")))).withColumn("artist_key", lower(trim(col("artist_name"))))
+
     spt_sel = (
         spt.select(
             "track_key",
@@ -108,15 +88,9 @@ def get_hot_track(lft, spt):
     hot_tracks.write.mode("overwrite").parquet(local_output_path("hot_tracks", "hot_tracks"))
     hot_tracks.write.mode("overwrite").parquet(s3_output_path("hot_tracks", "hot_tracks"))
 
-def run_all_analyses():
-    spark = init_spark()
-    lft, lfa, spt = load_tables(spark)
-    create_artist_retention_metrics(lfa)
-    create_artist_track_count_metrics(spt)
-    get_hot_track(lft, spt)
-    spark.stop()
-    print("[SUCCESS] All analysis tasks completed")
+    print("[SUCCESS] GET HOT TRACKS")
 
 
 if __name__ == "__main__":
-    run_all_analyses()
+    create_artist_track_count_metrics()
+    get_hot_track()

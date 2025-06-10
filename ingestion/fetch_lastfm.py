@@ -23,20 +23,5 @@ def fetch_top_tracks(limit=500):
 
     save_to_file(tracks,"raw","lastfm","top_tracks","top_tracks.json",True)
 
-def fetch_top_artists(limit=50):
-    params = {
-        "method": "chart.gettopartists",
-        "api_key": API_KEY,
-        "format": "json",
-        "limit": limit
-    }
-    response = requests.get(BASE_URL, params=params)
-    response.raise_for_status()
-
-    artists = response.json().get("artists", {}).get("artist", [])
-
-    save_to_file(artists, "raw", "lastfm", "top_artists", "top_artists.json", True)
-
 if __name__ == "__main__":
     fetch_top_tracks()
-    fetch_top_artists()

@@ -2,35 +2,27 @@ from pyspark.sql import SparkSession
 from elasticsearch import Elasticsearch, helpers
 from datetime import datetime
 
-# ========================
-# 配置参数
-# ========================
-ROOT_DIR = "s3a://usage-data-music/combined"
-ES_HOST = "http://localhost:9200"
+def import_all_parquet_files():
+    spark = (SparkSession.builder
+             .appName("ImportParquetToES")
+             .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
+             .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+             .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
+             .config("spark.hadoop.fs.s3a.access.key", "dummy")
+             .config("spark.hadoop.fs.s3a.secret.key", "dummy")
+             .config("spark.hadoop.fs.s3a.path.style.access", "true")
+             .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
+             .getOrCreate()
+             )
 
-# 初始化 SparkSession（确保 S3A 支持）
-spark = (SparkSession.builder
-    .appName("ImportParquetToES")
-    .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:3.3.4")
-    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
-    .config("spark.hadoop.fs.s3a.endpoint", "http://localhost:4566")
-    .config("spark.hadoop.fs.s3a.access.key", "dummy")
-    .config("spark.hadoop.fs.s3a.secret.key", "dummy")
-    .config("spark.hadoop.fs.s3a.path.style.access", "true")
-    .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false")
-    .getOrCreate()
-)
-
-es = Elasticsearch(hosts=[ES_HOST],basic_auth=('elastic', 'bm1tNqK2'))
-
-def import_all_parquet_files(root_dir):
+    es = Elasticsearch(hosts=["http://localhost:9200"], basic_auth=('elastic', 'bm1tNqK2'))
     # 遍历所有逻辑表目录
-    groups = ["artist_retention_metrics", "artist_track_count_metrics", "hot_tracks"]
+    groups = ["artist_track_count_metrics", "hot_tracks"]
 
     today = datetime.today().strftime("%Y%m%d")
 
     for index_name in groups:
-        path = f"{root_dir}/{index_name}/{today}/{index_name}.parquet"
+        path = f"s3a://usage-data-music/combined/{index_name}/{today}/{index_name}.parquet"
         print(f"\n[READ] {path}")
 
         try:
@@ -57,4 +49,4 @@ def import_all_parquet_files(root_dir):
             print(f"[ERROR] Elasticsearch insert failed: {e}")
 
 if __name__ == "__main__":
-    import_all_parquet_files(ROOT_DIR)
+    import_all_parquet_files()

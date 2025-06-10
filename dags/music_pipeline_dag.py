@@ -6,11 +6,11 @@ from airflow import DAG
 from airflow.operators.python import PythonOperator
 
 from datetime import datetime
-from ingestion.fetch_lastfm import fetch_top_tracks,fetch_top_artists
+from ingestion.fetch_lastfm import fetch_top_tracks
 from ingestion.fetch_spotify import fetch_tracks
-from transform.format_lastfm import format_lastfm_artists,format_lastfm_tracks
+from transform.format_lastfm import format_lastfm_tracks
 from transform.format_spotify import format_spotify_tracklist
-from transform.combine_music_data import run_all_analyses
+from transform.combine_music_data import create_artist_track_count_metrics,get_hot_track
 from index.bulk_import_to_es import import_all_parquet_files
 
 with DAG(
@@ -34,11 +34,6 @@ with DAG(
         python_callable=fetch_top_tracks,
     )
 
-    fetch_lastfm_top_artists = PythonOperator(
-        task_id="fetch_lastfm_top_artists",
-        python_callable=fetch_top_artists,
-    )
-
     fetch_spotify = PythonOperator(
         task_id="fetch_spotify",
         python_callable=fetch_tracks,
@@ -50,19 +45,19 @@ with DAG(
         python_callable=format_lastfm_tracks,
     )
 
-    format_lastfm_artist = PythonOperator(
-        task_id="format_lastfm_artist",
-        python_callable=format_lastfm_artists,
-    )
-
     format_spotify = PythonOperator(
         task_id="format_spotify",
         python_callable=format_spotify_tracklist,
     )
 
-    combine_data = PythonOperator(
-        task_id="combine_data",
-        python_callable=run_all_analyses,
+    artist_track_count = PythonOperator(
+        task_id="artist_track_count",
+        python_callable=create_artist_track_count_metrics,
+    )
+
+    hot_track = PythonOperator(
+        task_id="hot_track",
+        python_callable=get_hot_track,
     )
 
     index_to_es = PythonOperator(
@@ -71,9 +66,13 @@ with DAG(
     )
 
     fetch_lastfm_top_tracks >> format_lastfm_track
-    fetch_lastfm_top_artists >> format_lastfm_artist
     fetch_spotify >> format_spotify
 
-    [format_lastfm_track, format_lastfm_artist, format_spotify] >> combine_data
-    combine_data >> index_to_es
+    format_spotify >> artist_track_count
+    format_lastfm_track >> hot_track
+    format_spotify >> hot_track
+
+    for upstream in [artist_track_count, hot_track]:
+        upstream >> index_to_es
+
 

@@ -27,15 +27,11 @@ big_data_music/
 ```bash
   docker compose down --volumes --remove-orphans
 ```
-2. 初始化（只需一次）
-```bash
-  docker compose up airflow-init
-```
-3. 启动服务
+2. 启动服务
 ```bash
   docker compose up -d
 ```
-4. 创建bucket(只需一次)
+3. 创建bucket(只需一次)
 ```bash
     docker compose exec localstack awslocal s3 mb s3://raw-data-music
 ```
@@ -69,6 +65,15 @@ SPOTIFY_CLIENT_SECRET=你的ClientSecret
 LASTFM_API_KEY=你的apikey
 ```
 
+
+### 查看localstack
+```bash
+    docker compose exec localstack awslocal s3 ls s3://raw-data-music --recursive
+
+    docker compose exec localstack awslocal s3 ls s3://formatted-data-music --recursive
+
+    docker compose exec localstack awslocal s3 ls s3://usage-data-music --recursive
+```
 
 ## topTracks_example
 ```
